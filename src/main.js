@@ -154,7 +154,7 @@ function animate(now) {
   if (firstRender) {
     firstRender = false;
     loadingTitle.textContent = 'Loading detailed supercar';
-    loadingDetail.textContent = 'The ground, physics and driving controls are ready. The model is downloaded from its CC0 source.';
+    loadingDetail.textContent = 'The ground, physics and driving controls are ready. The attributed model is fetched from its public source.';
   }
 }
 resize();
