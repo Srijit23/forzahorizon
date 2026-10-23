@@ -3,13 +3,10 @@ import * as CANNON from 'cannon-es';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
-// Detailed Huracán Performante exterior derivative. The source model's
-// license and attribution are documented in README.md.
-const MODEL_URL =
-  'https://raw.githubusercontent.com/seemorecodez/philadelphia-violent/main/public/models/huracan-performante.glb';
-const STATIC_WHEEL_COMPONENTS = new Set([
-  'Circle', 'Circle.001', 'Circle.002', 'Circle.003', 'Circle.005',
-]);
+// Locally hosted Sketchfab GLB. Keep the model in public/models so the
+// production build bundles it with the game rather than relying on a third-party host.
+const MODEL_URL = '/models/2016_lamborghini_huracan.glb';
+const TARGET_CAR_LENGTH = 4.5;
 
 // Centers measured from the model's published metadata. +Z is forward, +Y up.
 // Left/right labels follow the asset metadata's coordinate convention.
@@ -257,21 +254,51 @@ export function createVehicle(world, scene, setStatus) {
       dracoLoader.dispose();
     }
 
-    // Published asset coordinates are already +Y up and +Z forward, normalized
-    // to 4.506 m long, with the tires at y=0. The physics root sits at y=0.72.
+    // The uploaded Sketchfab GLB has its own scene transform and no useful
+    // real-world scale. Measure the transformed model, preserve its proportions,
+    // make its longest horizontal dimension 4.5 m, center it, and place its
+    // lowest point at the ground plane relative to the chassis origin.
+    gltf.scene.updateMatrixWorld(true);
+    const sourceBounds = new THREE.Box3().setFromObject(gltf.scene);
+    if (sourceBounds.isEmpty()) throw new Error('The GLB contains no renderable geometry');
+    const sourceSize = sourceBounds.getSize(new THREE.Vector3());
+    const horizontalLength = Math.max(sourceSize.x, sourceSize.z);
+    if (!Number.isFinite(horizontalLength) || horizontalLength <= 0) {
+      throw new Error('The GLB has invalid dimensions');
+    }
+    const scale = TARGET_CAR_LENGTH / horizontalLength;
+    const sourceCenter = sourceBounds.getCenter(new THREE.Vector3());
+
     const assetRoot = new THREE.Group();
-    assetRoot.position.y = -0.72;
+    assetRoot.scale.setScalar(scale);
+    assetRoot.position.set(
+      -sourceCenter.x * scale,
+      -0.72 - sourceBounds.min.y * scale,
+      -sourceCenter.z * scale,
+    );
     assetRoot.add(gltf.scene);
     visualRoot.add(assetRoot);
     visualRoot.updateMatrixWorld(true);
 
+    // Keep model materials and embedded textures intact. Meshes that are
+    // clearly individual wheel parts are hidden only when they sit inside one
+    // of the four wheel envelopes; the physics-driven wheel visuals then
+    // provide steering and rotation. Large body panels are never hidden.
+    const wheelCenters = WHEEL_POINTS.map(([x, y, z]) =>
+      new THREE.Vector3(x, y - 0.16, z),
+    );
     gltf.scene.traverse((object) => {
       if (!object.isMesh) return;
       object.castShadow = true;
       object.receiveShadow = true;
-      // These nodes combine the four static wheel assemblies into shared meshes.
-      // Hide them and render one separate, physics-driven assembly per wheel.
-      if (STATIC_WHEEL_COMPONENTS.has(object.name)) object.visible = false;
+      if (!object.geometry.boundingBox) object.geometry.computeBoundingBox();
+      const localBounds = object.geometry.boundingBox.clone().applyMatrix4(object.matrixWorld);
+      const dimensions = localBounds.getSize(new THREE.Vector3());
+      const center = localBounds.getCenter(new THREE.Vector3());
+      visualRoot.worldToLocal(center);
+      const largestDimension = Math.max(dimensions.x, dimensions.y, dimensions.z);
+      const nearWheel = wheelCenters.some((wheelCenter) => center.distanceTo(wheelCenter) < 0.42);
+      if (nearWheel && largestDimension < 0.9) object.visible = false;
     });
 
     fallbackRoot.removeFromParent();
