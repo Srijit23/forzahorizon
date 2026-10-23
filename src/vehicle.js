@@ -148,7 +148,7 @@ export function createVehicle(world, scene, setStatus) {
   const model = { loaded: false, label: 'Loading CC0 sports-car model', source: MODEL_URL };
 
   function reset() {
-    chassis.position.set(0, 0.82, 0);
+    chassis.position.set(0, 0.72, 0);
     chassis.quaternion.set(0, 0, 0, 1);
     chassis.velocity.set(0, 0, 0);
     chassis.angularVelocity.set(0, 0, 0);
@@ -250,8 +250,12 @@ export function createVehicle(world, scene, setStatus) {
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
     loader.setDRACOLoader(dracoLoader);
 
-    const gltf = await loader.loadAsync(MODEL_URL);
-    dracoLoader.dispose();
+    let gltf;
+    try {
+      gltf = await loader.loadAsync(MODEL_URL);
+    } finally {
+      dracoLoader.dispose();
+    }
 
     // Published asset coordinates are already +Y up and +Z forward, normalized
     // to 4.506 m long, with the tires at y=0. The physics root sits at y=0.72.
