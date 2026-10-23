@@ -1,19 +1,16 @@
 # Third-party assets and attribution
 
-## Lamborghini Huracán Performante exterior
+## 2016 Lamborghini Huracan
 
-- **Original creator:** George (georgezaky108)
-- **Creator's source listing:** https://blendswap.com/blend/20021
-- **Original creator post:** https://blenderartists.org/t/lamborghini-huracan-performante/692996
-- **License stated by creator listing:** Creative Commons Attribution (CC BY). The listing does not specify a version, so this project does not claim a specific version.
-- **Prepared derivative used as the source:** https://github.com/seemorecodez/philadelphia-violent/blob/main/public/models/huracan-performante.glb
-- **Derivative license notice:** https://github.com/seemorecodez/philadelphia-violent/blob/main/public/models/huracan-performante.LICENSE.txt
-- **Derivative metadata:** https://github.com/seemorecodez/philadelphia-violent/blob/main/public/models/huracan-performante.metadata.json
+- **Asset title:** 2016 Lamborghini Huracan
+- **Creator:** RBLXSupercars
+- **Creator profile:** https://sketchfab.com/RBLXSupercars
+- **Source listing:** https://sketchfab.com/3d-models/2016-lamborghini-huracan-32f8ddbfb9ef45b085b0fa614f43af0f
+- **License stated in the embedded GLB metadata:** Creative Commons Attribution 4.0 International (CC BY 4.0)
+- **License text:** https://creativecommons.org/licenses/by/4.0/
 
-The prepared derivative states these changes from the original: visible front badge and rear lettering removed; studio, lighting and camera objects omitted; legacy Cycles materials converted to glTF physically based rendering materials; model normalized to 4.506 metres long; rendered geometry, bevels and selected subdivision levels evaluated; unused non-rendering vertices removed; and Draco compression applied.
+Attribution: **“2016 Lamborghini Huracan” by RBLXSupercars**, sourced from Sketchfab and licensed under **CC BY 4.0**. The model is used in this browser driving prototype; its dimensions are normalized at runtime and physics-driven wheel visuals are added by the project. The original GLB embeds its materials and textures. The additional texture files supplied in the ZIP are not required by the runtime loader.
 
-This project additionally hides the source asset's combined static wheel-component meshes at runtime and displays four separate wheel visuals driven by the vehicle physics controller. The external GLB is fetched at runtime and is not currently stored in this repository.
+The model is expected at `public/models/2016_lamborghini_huracan.glb` and is loaded at runtime from `/models/2016_lamborghini_huracan.glb`. The model binary is not yet committed in this repository; it must be copied from the uploaded ZIP into that path before the detailed model can load in production.
 
-Credit: **Lamborghini Huracán Performante by George (georgezaky108)**, under the CC BY license identified in the creator's listing. Prepared derivative hosted by seemorecodez/philadelphia-violent. Modifications for this game prototype: static wheel components are replaced with physics-linked visual wheels.
-
-No endorsement by the original creator or Lamborghini is implied. The source asset's license is separate from any license for this project's code.
+No endorsement by RBLXSupercars or Lamborghini is implied. The source asset's license is separate from the license for this project's code.
