@@ -1,18 +1,23 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
-// Original, detailed CC0 sports-car model (not a branded Lamborghini model).
-// The source project and license are documented in README.md.
+// Detailed Huracán Performante exterior derivative. The source model's
+// license and attribution are documented in README.md.
 const MODEL_URL =
-  'https://raw.githubusercontent.com/JaronKBragg7337/spectral-gt-rs/main/spectral_gt_rs_game_ready.glb';
+  'https://raw.githubusercontent.com/seemorecodez/philadelphia-violent/main/public/models/huracan-performante.glb';
+const STATIC_WHEEL_COMPONENTS = new Set([
+  'Circle', 'Circle.001', 'Circle.002', 'Circle.003', 'Circle.005',
+]);
 
-const WHEEL_LABELS = ['Front_Left', 'Front_Right', 'Rear_Left', 'Rear_Right'];
+// Centers measured from the model's published metadata. +Z is forward, +Y up.
+// Left/right labels follow the asset metadata's coordinate convention.
 const WHEEL_POINTS = [
-  [-0.91, -0.16,  1.28],
-  [ 0.91, -0.16,  1.28],
-  [-0.91, -0.16, -1.28],
-  [ 0.91, -0.16, -1.28],
+  [ 0.7488, -0.24,  1.1679],
+  [-0.7488, -0.24,  1.1679],
+  [ 0.7423, -0.24, -1.3776],
+  [-0.7423, -0.24, -1.3776],
 ];
 
 function makeMaterial(color, options = {}) {
@@ -61,34 +66,34 @@ function makeWheelVisual(scene) {
   const rimMaterial = new THREE.MeshStandardMaterial({ color: 0xbac2ce, metalness: 0.84, roughness: 0.29 });
   const darkMaterial = new THREE.MeshStandardMaterial({ color: 0x313b49, metalness: 0.78, roughness: 0.35 });
   const caliperMaterial = new THREE.MeshStandardMaterial({ color: 0xe43c40, metalness: 0.28, roughness: 0.42 });
-  const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.486, 0.486, 0.22, 28, 1), tireMaterial);
+  const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.324, 0.324, 0.18, 28, 1), tireMaterial);
   tire.geometry.rotateZ(Math.PI / 2);
   tire.castShadow = true;
   tire.receiveShadow = true;
   root.add(tire);
 
   for (const side of [-1, 1]) {
-    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.315, 0.315, 0.026, 24), rimMaterial);
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.215, 0.215, 0.022, 24), rimMaterial);
     rim.geometry.rotateZ(Math.PI / 2);
-    rim.position.x = side * 0.105;
+    rim.position.x = side * 0.078;
     root.add(rim);
-    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.255, 0.255, 0.016, 24), darkMaterial);
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.176, 0.176, 0.014, 24), darkMaterial);
     disc.geometry.rotateZ(Math.PI / 2);
-    disc.position.x = side * 0.087;
+    disc.position.x = side * 0.064;
     root.add(disc);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.035, 16), rimMaterial);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.03, 16), rimMaterial);
     hub.geometry.rotateZ(Math.PI / 2);
-    hub.position.x = side * 0.126;
+    hub.position.x = side * 0.086;
     root.add(hub);
     for (let i = 0; i < 5; i += 1) {
-      const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.25, 0.045), rimMaterial);
-      spoke.position.x = side * 0.12;
+      const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.17, 0.035), rimMaterial);
+      spoke.position.x = side * 0.082;
       spoke.rotation.x = (Math.PI * 2 * i) / 5;
       root.add(spoke);
     }
   }
-  const caliper = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.22, 0.14), caliperMaterial);
-  caliper.position.set(0.095, 0.13, 0.08);
+  const caliper = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.15, 0.11), caliperMaterial);
+  caliper.position.set(0.072, 0.09, 0.055);
   root.add(caliper);
   scene.add(root);
   return root;
@@ -103,7 +108,7 @@ export function createVehicle(world, scene, setStatus) {
     angularDamping: 0.42,
     allowSleep: false,
   });
-  chassis.addShape(new CANNON.Box(new CANNON.Vec3(0.86, 0.28, 2.12)));
+  chassis.addShape(new CANNON.Box(new CANNON.Vec3(0.84, 0.24, 1.98)));
   chassis.updateMassProperties();
 
   // Cannon's raycast vehicle uses +Z forward for this scene.
@@ -116,7 +121,7 @@ export function createVehicle(world, scene, setStatus) {
 
   WHEEL_POINTS.forEach(([x, y, z], index) => {
     vehicle.addWheel({
-      radius: 0.486,
+      radius: 0.324,
       directionLocal: new CANNON.Vec3(0, -1, 0),
       axleLocal: new CANNON.Vec3(-1, 0, 0),
       chassisConnectionPointLocal: new CANNON.Vec3(x, y, z),
@@ -241,83 +246,41 @@ export function createVehicle(world, scene, setStatus) {
 
   async function loadModel() {
     const loader = new GLTFLoader();
-    const gltf = await loader.loadAsync(MODEL_URL);
-    const assetRoot = new THREE.Group();
-    assetRoot.rotation.y = -Math.PI / 2; // Original asset faces +X; game forward is +Z.
-    assetRoot.scale.setScalar(0.9);
-    assetRoot.add(gltf.scene);
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+    loader.setDRACOLoader(dracoLoader);
 
-    // Calibrate in an isolated coordinate space before parenting to the moving
-    // chassis. This avoids a model-load race if the player starts driving early.
-    assetRoot.updateMatrixWorld(true);
-    const bounds = new THREE.Box3().setFromObject(assetRoot);
-    const center = bounds.getCenter(new THREE.Vector3());
-    assetRoot.position.set(-center.x, -0.72 - bounds.min.y, -center.z);
+    const gltf = await loader.loadAsync(MODEL_URL);
+    dracoLoader.dispose();
+
+    // Published asset coordinates are already +Y up and +Z forward, normalized
+    // to 4.506 m long, with the tires at y=0. The physics root sits at y=0.72.
+    const assetRoot = new THREE.Group();
+    assetRoot.position.y = -0.72;
+    assetRoot.add(gltf.scene);
     visualRoot.add(assetRoot);
     visualRoot.updateMatrixWorld(true);
-
-    const rootInverse = visualRoot.matrixWorld.clone().invert();
-    const wheelParts = new Map(WHEEL_LABELS.map((label) => [label, []]));
-    const partMatrices = new Map();
 
     gltf.scene.traverse((object) => {
       if (!object.isMesh) return;
       object.castShadow = true;
       object.receiveShadow = true;
-      const match = object.name.match(/^(Front|Rear)_(Left|Right)_/i);
-      if (!match) return;
-      const label = `${match[1][0].toUpperCase()}${match[1].slice(1).toLowerCase()}_${match[2][0].toUpperCase()}${match[2].slice(1).toLowerCase()}`;
-      if (!wheelParts.has(label)) return;
-      object.updateWorldMatrix(true, false);
-      const localMatrix = rootInverse.clone().multiply(object.matrixWorld);
-      if (!object.geometry.boundingBox) object.geometry.computeBoundingBox();
-      const partBounds = object.geometry.boundingBox.clone().applyMatrix4(localMatrix);
-      if (!partMatrices.has(label)) {
-        partMatrices.set(label, []);
-      }
-      partMatrices.get(label).push({ object, localMatrix, partBounds });
-      wheelParts.get(label).push(partBounds);
+      // These nodes combine the four static wheel assemblies into shared meshes.
+      // Hide them and render one separate, physics-driven assembly per wheel.
+      if (STATIC_WHEEL_COMPONENTS.has(object.name)) object.visible = false;
     });
-
-    let detailedWheelCount = 0;
-    for (let i = 0; i < WHEEL_LABELS.length; i += 1) {
-      const label = WHEEL_LABELS[i];
-      const parts = partMatrices.get(label) || [];
-      if (parts.length === 0) continue;
-      const assemblyBounds = new THREE.Box3();
-      for (const part of parts) assemblyBounds.union(part.partBounds);
-      const anchor = assemblyBounds.getCenter(new THREE.Vector3());
-      const inverseAnchor = new THREE.Matrix4().makeTranslation(-anchor.x, -anchor.y, -anchor.z);
-      const dynamicWheel = new THREE.Group();
-      scene.add(dynamicWheel);
-
-      for (const part of parts) {
-        const child = part.object;
-        const localToWheel = inverseAnchor.clone().multiply(part.localMatrix);
-        child.removeFromParent();
-        dynamicWheel.add(child);
-        child.matrixAutoUpdate = false;
-        child.matrix.copy(localToWheel);
-        child.matrix.decompose(child.position, child.quaternion, child.scale);
-        child.matrixAutoUpdate = false;
-      }
-
-      wheelVisuals[i].removeFromParent();
-      wheelVisuals[i] = dynamicWheel;
-      detailedWheelCount += 1;
-    }
 
     fallbackRoot.removeFromParent();
     model.loaded = true;
-    model.label = 'Detailed CC0 sports-car model loaded';
-    setStatus('MODEL READY · RAYCAST VEHICLE ACTIVE');
-    return { clips: gltf.animations?.length || 0, detailedWheelCount };
+    model.label = 'Lamborghini Huracán Performante model loaded';
+    setStatus('HURACÁN READY · 4 PHYSICS-DRIVEN WHEELS');
+    return { clips: gltf.animations?.length || 0, detailedWheelCount: 4 };
   }
 
   loadModel()
     .then(({ clips, detailedWheelCount }) => {
-      model.label = 'Detailed CC0 model · wheel assemblies linked to physics';
-      setStatus(`MODEL READY · ${detailedWheelCount}/4 DYNAMIC WHEELS · ${clips} ANIMATIONS`);
+      model.label = 'Huracán model · four physics-driven wheel visuals';
+      setStatus(`HURACÁN READY · ${detailedWheelCount}/4 DYNAMIC WHEELS`);
     })
     .catch((error) => {
       console.warn('External car asset could not be loaded; using the built-in fallback car.', error);
