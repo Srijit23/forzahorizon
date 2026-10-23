@@ -1,17 +1,17 @@
 # Forza Horizon-style driving prototype
 
-A lightweight browser-based 3D driving prototype. The first milestone is a white studio ground, a detailed sports-car model, a physics-driven chassis, synchronized wheel assemblies and responsive keyboard driving.
+A lightweight browser-based driving prototype with a detailed Lamborghini Huracán Performante exterior, a white studio ground, four spring/damper raycast wheels, speed-sensitive steering and a smooth chase camera.
 
 ## Run locally
 
-Install a current Node.js LTS release, then run:
+Install a current Node.js LTS release, then:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. To verify a production build:
+Open the local URL printed by Vite. To make a production bundle:
 
 ```bash
 npm run build
@@ -26,27 +26,40 @@ npm run preview
 - **Space / Shift:** brake
 - **R:** reset the car
 
-The physics loop runs at a fixed 60 Hz. It uses a rigid-body chassis and cannon-es `RaycastVehicle` with four spring/damper wheels. Steering is smoothed and its maximum angle decreases with speed. The visual wheel transforms are updated from the physics simulation after each step.
+## Vehicle implementation
 
-## Vehicle asset and license
+- Three.js WebGL rendering with a near-white ground plane, directional shadows and low-power renderer settings.
+- cannon-es rigid-body chassis and `RaycastVehicle` with four suspension/tyre contact points.
+- Fixed 60 Hz physics timestep, progressive throttle, coasting drag, reverse transition, braking, smoothed steering and a steering limit that reduces as speed rises.
+- Front wheels steer; rear wheels provide drive. The visible wheel assemblies update from the physics transforms after each simulation step.
+- The asset's original combined static wheel component meshes are hidden at runtime, and four separate wheel visuals are rendered at the measured tire locations so that rotation and steering remain visible.
+- If the external model or Draco decoder cannot be reached, a built-in fallback car remains drivable.
 
-The initial high-detail car is **Spectral GT RS**, an original fictional sports-car asset released under **CC0 1.0**. It is not an official Lamborghini model or manufacturer asset. Its 4.7 MB GLB is currently loaded from its public source repository:
+## Vehicle model and attribution
 
-- Model source: https://github.com/JaronKBragg7337/spectral-gt-rs
-- Direct GLB: https://raw.githubusercontent.com/JaronKBragg7337/spectral-gt-rs/main/spectral_gt_rs_game_ready.glb
-- License: https://creativecommons.org/publicdomain/zero/1.0/
+The main car is a prepared exterior derivative of **Lamborghini Huracán Performante**, originally by **George (georgezaky108)**. The creator's listing identifies the work as **Creative Commons Attribution (CC BY)**; the live listing does not specify a version. The prepared derivative and attribution notice are hosted in the public repository below. Full attribution and modification notes are in [THIRD_PARTY_ASSETS.md](THIRD_PARTY_ASSETS.md).
 
-The model includes separate named wheel parts. The loader reparents the four wheel assemblies into physics-driven groups so that the tires roll and the front wheels steer with the vehicle controller. If the asset host is offline or blocked by a network filter, the prototype falls back to a simple built-in car shape so the driving loop can still be tested.
+- Source and attribution listing: https://blendswap.com/blend/20021
+- Original creator post: https://blenderartists.org/t/lamborghini-huracan-performante/692996
+- Prepared GLB used at runtime: https://github.com/seemorecodez/philadelphia-violent/blob/main/public/models/huracan-performante.glb
+- License and geometry metadata: https://github.com/seemorecodez/philadelphia-violent/tree/main/public/models
+- CC BY license family: https://creativecommons.org/licenses/by/4.0/
 
-**Next asset task:** replace the fictional CC0 supercar with a properly licensed downloadable Lamborghini-style model once its redistribution and use terms are confirmed. Do not describe the current model as a Lamborghini.
+The runtime fetches the model from its public source rather than committing the 2.6 MB binary into this repository. A network connection is required for the detailed model. This is an exterior model without a modeled cabin interior, and it is not an official manufacturer asset or endorsement.
 
-## Performance decisions
+## Performance notes
 
-- WebGL renderer, low-power preference, antialiasing disabled, pixel ratio capped at 1.25.
+- Antialiasing off and device pixel ratio capped at 1.25 by default.
 - One directional shadow light with a modest shadow map.
-- A large white ground plane, simple scene and no expensive post-processing.
-- Four raycast wheels rather than four extra dynamic wheel rigid bodies.
+- No post-processing or large environment map.
+- One chassis and four raycast wheels rather than four additional dynamic wheel bodies.
 
-## Current scope
+The chosen Huracán model contains about 711,690 triangles. That is a detailed starting asset, but it still needs profiling on the target machine. If integrated graphics struggle, the next optimization should be a reduced-detail GLB/LOD while preserving the silhouette and wheel behavior.
 
-This is the first driving prototype, not a complete Forza Horizon clone. Traffic, an open world, audio, damage, multiple vehicles, gamepad support and mobile controls are out of scope until vehicle handling and wheel alignment are validated on target hardware.
+## Build validation
+
+A GitHub Actions workflow runs `npm install` and `npm run build` on pushes and pull requests to `main`. The execution environment for this change could not access GitHub/NPM directly, so a successful local production build has not yet been independently confirmed.
+
+## Scope
+
+This is milestone one, not a complete Forza Horizon clone. Roads, terrain, traffic, sound, damage, additional vehicles and a larger open world come after driving, wheel alignment and performance are validated.
