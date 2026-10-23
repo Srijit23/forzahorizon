@@ -37,15 +37,13 @@ npm run preview
 
 ## Vehicle model and attribution
 
-The main car is a prepared exterior derivative of **Lamborghini Huracán Performante**, originally by **George (georgezaky108)**. The creator's listing identifies the work as **Creative Commons Attribution (CC BY)**; the live listing does not specify a version. The prepared derivative and attribution notice are hosted in the public repository below. Full attribution and modification notes are in [THIRD_PARTY_ASSETS.md](THIRD_PARTY_ASSETS.md).
+The selected car is the uploaded **2016 Lamborghini Huracan** GLB by **RBLXSupercars**, sourced from Sketchfab. Its embedded GLB metadata identifies the asset as **CC BY 4.0**. Full attribution and integration notes are in [THIRD_PARTY_ASSETS.md](THIRD_PARTY_ASSETS.md).
 
-- Source and attribution listing: https://blendswap.com/blend/20021
-- Original creator post: https://blenderartists.org/t/lamborghini-huracan-performante/692996
-- Prepared GLB used at runtime: https://github.com/seemorecodez/philadelphia-violent/blob/main/public/models/huracan-performante.glb
-- License and geometry metadata: https://github.com/seemorecodez/philadelphia-violent/tree/main/public/models
-- CC BY license family: https://creativecommons.org/licenses/by/4.0/
+- Original asset: https://sketchfab.com/3d-models/2016-lamborghini-huracan-32f8ddbfb9ef45b085b0fa614f43af0f
+- Creator: https://sketchfab.com/RBLXSupercars
+- License: https://creativecommons.org/licenses/by/4.0/
 
-The runtime fetches the model from its public source rather than committing the 2.6 MB binary into this repository. A network connection is required for the detailed model. This is an exterior model without a modeled cabin interior, and it is not an official manufacturer asset or endorsement.
+The game now loads the model from `/models/2016_lamborghini_huracan.glb`, preserves its embedded materials/textures, normalizes its dimensions to a 4.5 m horizontal length, and overlays physics-driven wheel visuals. **The 10.8 MB GLB binary still needs to be added at `public/models/2016_lamborghini_huracan.glb`**; the source-code integration is committed, but this repository connector cannot transfer the uploaded binary itself. Until that file is present in the repository and deployed, the game will use its built-in fallback car. The companion texture images in the ZIP are already embedded in the GLB and are not needed for runtime loading.
 
 ## Performance notes
 
