@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f3f5f8" />
+    <meta name="description" content="A lightweight 3D supercar driving prototype built with Three.js and cannon-es." />
+    <title>Forza Horizon | Driving Prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f3f5f8;
+        color: #151922;
+        font-synthesis: none;
+      }
+      * { box-sizing: border-box; }
+      html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+      body { background: #f3f5f8; }
+      canvas { display: block; width: 100%; height: 100%; outline: none; }
+      .hud {
+        position: fixed; inset: 0; pointer-events: none; display: flex;
+        flex-direction: column; justify-content: space-between; padding: 22px;
+      }
+      .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+      .brand, .telemetry, .controls, .status {
+        border: 1px solid rgba(255,255,255,.8);
+        background: rgba(255,255,255,.76); backdrop-filter: blur(12px);
+        box-shadow: 0 8px 28px rgba(30,45,70,.08); border-radius: 16px;
+      }
+      .brand { padding: 13px 16px; }
+      .eyebrow { font-size: 10px; letter-spacing: .2em; color: #677184; font-weight: 800; }
+      .brand h1 { margin: 4px 0 0; font-size: 15px; letter-spacing: .02em; }
+      .brand p { margin: 4px 0 0; font-size: 11px; color: #677184; }
+      .telemetry { min-width: 185px; padding: 12px 15px; text-align: right; }
+      .speed-line { display: flex; align-items: baseline; justify-content: flex-end; gap: 7px; }
+      #speed { font-size: 38px; line-height: 1; letter-spacing: -.06em; font-weight: 800; font-variant-numeric: tabular-nums; }
+      .unit { color: #677184; font-size: 11px; font-weight: 700; }
+      .telemetry-bottom { display: flex; justify-content: flex-end; gap: 14px; margin-top: 7px; font-size: 11px; color: #677184; }
+      .telemetry-bottom strong { color: #151922; }
+      .bottom-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
+      .controls { display: flex; gap: 13px; padding: 12px 14px; align-items: center; }
+      .control-group { display: flex; align-items: center; gap: 5px; }
+      kbd { font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; display: inline-flex; align-items:center; justify-content:center; min-width: 26px; height: 25px; padding: 0 6px; border: 1px solid #d6dce5; border-bottom-width: 2px; border-radius: 6px; background: #fff; color: #253047; }
+      .control-label { color: #677184; font-size: 11px; margin-left: 3px; }
+      .status { padding: 10px 13px; color: #5b6678; font-size: 11px; text-align: right; max-width: 42vw; }
+      .status strong { color: #1c2738; }
+      .loading {
+        position: fixed; inset: 0; display: grid; place-items: center; padding: 20px;
+        background: rgba(243,245,248,.7); backdrop-filter: blur(8px); z-index: 5;
+        transition: opacity .25s ease, visibility .25s ease;
+      }
+      .loading.hidden { opacity: 0; visibility: hidden; }
+      .loading-card { width: min(360px, 100%); padding: 24px; border-radius: 18px; background: rgba(255,255,255,.94); border: 1px solid white; box-shadow: 0 20px 70px rgba(40,55,80,.16); text-align: center; }
+      .spinner { width: 25px; height: 25px; border: 3px solid #dbe2ec; border-top-color: #5474c8; border-radius: 50%; margin: 0 auto 13px; animation: spin .8s linear infinite; }
+      .loading-card b { display: block; font-size: 14px; }
+      .loading-card small { display: block; margin-top: 7px; color: #68758a; line-height: 1.5; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (max-width: 640px) {
+        .hud { padding: 12px; }
+        .brand { padding: 10px 12px; }
+        .brand h1 { font-size: 13px; }
+        .brand p { max-width: 145px; line-height: 1.35; }
+        .telemetry { min-width: 130px; padding: 10px 12px; }
+        #speed { font-size: 31px; }
+        .controls { max-width: 100%; flex-wrap: wrap; gap: 7px; padding: 9px; }
+        .control-label { font-size: 10px; }
+        .status { display: none; }
+        .bottom-row { align-items: flex-end; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game-canvas" aria-label="3D driving game canvas" tabindex="0"></canvas>
+      <div class="hud">
+        <div class="topbar">
+          <section class="brand">
+            <div class="eyebrow">FH / PROTOTYPE 01</div>
+            <h1>SUPERCAR TEST DRIVE</h1>
+            <p>White studio · Vehicle physics preview</p>
+          </section>
+          <section class="telemetry" aria-label="Vehicle telemetry">
+            <div class="speed-line"><span id="speed">000</span><span class="unit">KM/H</span></div>
+            <div class="telemetry-bottom"><span>GEAR <strong id="gear">N</strong></span><span>STEER <strong id="steer">0°</strong></span></div>
+          </section>
+        </div>
+        <div class="bottom-row">
+          <section class="controls" aria-label="Driving controls">
+            <div class="control-group"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span class="control-label">DRIVE</span></div>
+            <div class="control-group"><kbd>SPACE</kbd><span class="control-label">BRAKE</span></div>
+            <div class="control-group"><kbd>R</kbd><span class="control-label">RESET</span></div>
+          </section>
+          <div id="status" class="status"><strong>INITIALIZING</strong> · Preparing scene</div>
+        </div>
+      </div>
+      <div id="loading" class="loading">
+        <div class="loading-card">
+          <div class="spinner" id="spinner"></div>
+          <b id="loading-title">Preparing the test drive</b>
+          <small id="loading-detail">Initializing WebGL, physics and the car model.</small>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
