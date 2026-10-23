@@ -145,7 +145,7 @@ export function createVehicle(world, scene, setStatus) {
   createFallbackBody(fallbackRoot);
 
   let wheelVisuals = WHEEL_POINTS.map(() => makeWheelVisual(scene));
-  const model = { loaded: false, label: 'Loading CC0 sports-car model', source: MODEL_URL };
+  const model = { loaded: false, label: 'Loading Lamborghini Huracán Performante model', source: MODEL_URL };
 
   function reset() {
     chassis.position.set(0, 0.72, 0);
