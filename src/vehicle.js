@@ -165,9 +165,11 @@ export function createVehicle(world, scene, setStatus) {
     const forward = keys.has('KeyW') || keys.has('ArrowUp');
     const reverse = keys.has('KeyS') || keys.has('ArrowDown');
     const handBrake = keys.has('Space') || keys.has('ShiftLeft') || keys.has('ShiftRight');
+    // Three/Cannon's positive steering angle turns the front wheels left in
+    // this setup. Keep the driver's input intuitive: A = left, D = right.
     const steerInput =
-      (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) -
-      (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0);
+      (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0) -
+      (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0);
 
     const speedFactor = THREE.MathUtils.clamp(Math.abs(signedSpeed) / 42, 0, 1);
     const maxSteerAngle = THREE.MathUtils.lerp(0.49, 0.135, speedFactor);
@@ -270,11 +272,17 @@ export function createVehicle(world, scene, setStatus) {
     const sourceCenter = sourceBounds.getCenter(new THREE.Vector3());
 
     const assetRoot = new THREE.Group();
+    // This particular GLB's nose points down -Z after its embedded scene
+    // transform, while the driving physics and chase camera use +Z as forward.
+    // Rotate the complete imported asset 180 degrees so nose, steering and
+    // camera all agree. Because the rotation flips X/Z, offset by the flipped
+    // source center rather than the unrotated center.
+    assetRoot.rotation.y = Math.PI;
     assetRoot.scale.setScalar(scale);
     assetRoot.position.set(
-      -sourceCenter.x * scale,
+      sourceCenter.x * scale,
       -0.72 - sourceBounds.min.y * scale,
-      -sourceCenter.z * scale,
+      sourceCenter.z * scale,
     );
     assetRoot.add(gltf.scene);
     visualRoot.add(assetRoot);
