@@ -246,13 +246,15 @@ export function createVehicle(world, scene, setStatus) {
     assetRoot.rotation.y = -Math.PI / 2; // Original asset faces +X; game forward is +Z.
     assetRoot.scale.setScalar(0.9);
     assetRoot.add(gltf.scene);
-    visualRoot.add(assetRoot);
-    visualRoot.updateMatrixWorld(true);
 
+    // Calibrate in an isolated coordinate space before parenting to the moving
+    // chassis. This avoids a model-load race if the player starts driving early.
+    assetRoot.updateMatrixWorld(true);
     const bounds = new THREE.Box3().setFromObject(assetRoot);
     const center = bounds.getCenter(new THREE.Vector3());
     assetRoot.position.set(-center.x, -0.72 - bounds.min.y, -center.z);
-    assetRoot.updateMatrixWorld(true);
+    visualRoot.add(assetRoot);
+    visualRoot.updateMatrixWorld(true);
 
     const rootInverse = visualRoot.matrixWorld.clone().invert();
     const wheelParts = new Map(WHEEL_LABELS.map((label) => [label, []]));
